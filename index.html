@@ -1,283 +1,154 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Cookie Clicker</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at center, #172033 0%, #070a12 100%);
-      color: #f8fafc;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* 上部：全世界の合計クリック数 */
-    .header {
-      width: 100%;
-      max-width: 600px;
-      padding: 32px 20px 0 20px;
-      text-align: center;
-      z-index: 10;
-    }
-    .global-label {
-      font-size: 14px;
-      letter-spacing: 3px;
-      color: #64748b;
-      font-weight: 700;
-    }
-    .global-count {
-      font-size: 82px;
-      font-weight: 800;
-      color: #f8fafc;
-      text-shadow: 0 6px 30px rgba(245, 158, 11, 0.25);
-      margin: 6px 0;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -1px;
-    }
-
-    /* 中央クッキーエリア */
-    .stage {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex: 1;
-      width: 100%;
-    }
-    .glow-ring {
-      position: absolute;
-      width: 440px;
-      height: 440px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(217, 119, 6, 0.28) 0%, rgba(217, 119, 6, 0) 70%);
-      pointer-events: none;
-      animation: pulseGlow 4s ease-in-out infinite;
-    }
-
-    /* ふわふわ揺れるアニメーション＆広い当たり判定 */
-    .cookie-wrapper {
-      animation: floatCookie 3.8s ease-in-out infinite;
-      cursor: pointer;
-      position: relative;
-      z-index: 5;
-      transition: filter 0.2s ease;
-      padding: 20px;
-    }
-    .cookie-wrapper:hover {
-      filter: brightness(1.08);
-    }
-
-    /* 巨大クッキー (380px) */
-    .cookie-img {
-      width: 380px;
-      height: 380px;
-      object-fit: contain;
-      filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.8));
-      transition: transform 0.06s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .cookie-wrapper:active .cookie-img {
-      transform: scale(0.9) rotate(-3deg);
-    }
-
-    /* クリック時の +1 エフェクト */
-    .floating-plus {
-      position: fixed;
-      font-size: 32px;
-      font-weight: 800;
-      color: #fbbf24;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
-      pointer-events: none;
-      z-index: 20;
-      animation: floatUpFade 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    /* 下部：Your Clicks カード */
-    .footer {
-      width: 100%;
-      max-width: 420px;
-      padding: 0 20px 32px 20px;
-      z-index: 10;
-    }
-    .user-stats-card {
-      background-color: rgba(30, 41, 59, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    }
-    .user-stat-title {
-      font-size: 12px;
-      color: #94a3b8;
-      letter-spacing: 1.5px;
-      font-weight: 700;
-    }
-    .user-stat-value {
-      font-size: 26px;
-      font-weight: 800;
-      color: #38bdf8;
-      font-variant-numeric: tabular-nums;
-    }
-
-    @keyframes floatCookie {
-      0%, 100% {
-        transform: translateY(0px) rotate(-1deg);
-      }
-      50% {
-        transform: translateY(-16px) rotate(2.5deg);
-      }
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% {
-        transform: scale(0.92);
-        opacity: 0.65;
-      }
-      50% {
-        transform: scale(1.12);
-        opacity: 1;
-      }
-    }
-
-    @keyframes floatUpFade {
-      0% {
-        opacity: 1;
-        transform: translate(-50%, -20%) scale(0.8);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, -100px) scale(1.3);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グローバル・クッキークリック</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            background: #2a2a2a;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #f39c12;
+        }
+        .counter {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .cookie-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cookie {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            transition: transform 0.1s ease;
+            object-fit: cover;
+        }
+        .cookie:active {
+            transform: scale(0.92);
+        }
+        .stats {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #b2bec3;
+            background: #333333;
+            padding: 10px;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- 上部：全世界の合計クリック数 -->
-  <div class="header">
-    <div class="global-label">WORLDWIDE TOTAL COOKIES</div>
-    <div id="globalCount" class="global-count">0</div>
-  </div>
+    <div class="container">
+        <h1>WORLDWIDE TOTAL</h1>
+        <div class="counter" id="global-count">読み込み中...</div>
 
-  <!-- 中央：巨大なクッキー -->
-  <div class="stage">
-    <div class="glow-ring"></div>
-    <div id="cookieBtn" class="cookie-wrapper" title="Click!">
-      <img src="cookie.png" alt="Cookie" class="cookie-img" id="cookieImage">
+        <div class="cookie-container" id="click-btn">
+            <!-- 同じフォルダ内にある cookie.png を読み込みます -->
+            <img src="cookie.png" alt="Cookie" class="cookie" id="cookie-img">
+        </div>
+
+        <div class="stats">
+            YOUR CLICKS: <span id="personal-count">0</span>
+        </div>
     </div>
-  </div>
 
-  <!-- 下部：Your Clicks -->
-  <div class="footer">
-    <div class="user-stats-card">
-      <span class="user-stat-title">YOUR CLICKS</span>
-      <span id="localCount" class="user-stat-value">0</span>
-    </div>
-  </div>
+    <!-- Firebase SDKの読み込み (Modular v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <!-- Firebase SDK (v10) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // ▼ ここに自分のFirebaseの設定を貼り付けてください ▼
-    const firebaseConfig = {
+        // ==========================================
+        // 自分のFirebase設定に書き換えてください
+        // ==========================================
+        const firebaseConfig = {
   apiKey: "AIzaSyDcvlkcktn6LeyZvbq1kcoyxIu0FQ4m3dc",
   authDomain: "chat-10127.firebaseapp.com",
   databaseURL: "https://chat-10127-default-rtdb.firebaseio.com",
   projectId: "chat-10127",
   storageBucket: "chat-10127.firebasestorage.app",
   messagingSenderId: "622326024517",
-  appId: "1:622326024517:web:ced326fd5863530090d62c"};
+  appId: "1:622326024517:web:ced326fd5863530090d62c",
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // 永続的に同じデータベースを指すID
-    const counterRef = doc(db, "global", "cookie_counter_master_v2");
+        // Firebaseの初期化
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    const globalCountEl = document.getElementById("globalCount");
-    const localCountEl = document.getElementById("localCount");
-    const cookieBtn = document.getElementById("cookieBtn");
+        // 要素の取得
+        const globalCountEl = document.getElementById("global-count");
+        const personalCountEl = document.getElementById("personal-count");
+        const clickBtn = document.getElementById("click-btn");
 
-    let mySavedClicks = parseInt(localStorage.getItem("my_cookie_clicks_master_v2") || "0", 10);
-    localCountEl.textContent = mySavedClicks.toLocaleString();
+        // ローカルストレージから自分のクリック数を読み込む
+        let personalClicks = localStorage.getItem("my_clicks") ? parseInt(localStorage.getItem("my_clicks")) : 0;
+        personalCountEl.textContent = personalClicks;
 
-    // ページ読み込み時にサーバーから最新の数値を確実に取得する
-    async function loadInitialCount() {
-      try {
-        const docSnap = await getDoc(counterRef);
-        if (docSnap.exists()) {
-          const total = docSnap.data().count || 0;
-          globalCountEl.textContent = total.toLocaleString();
-        } else {
-          // まだデータがなければ0で初期化
-          await setDoc(counterRef, { count: 0 });
-          globalCountEl.textContent = "0";
+        // Firestoreのリアルタイム同期（世界全体の数値）
+        const cookieRef = doc(db, "clicks", "global");
+        onSnapshot(cookieRef, (docSnap) => {
+            if (docSnap.exists()) {
+                globalCountEl.textContent = docSnap.data().count.toLocaleString();
+            } else {
+                globalCountEl.textContent = "0";
+            }
+        });
+
+        // クリックされたときの処理（トランザクションを使って安全に+1する）
+        async function handleClick() {
+            // 個人カウンターを即時増やす
+            personalClicks++;
+            personalCountEl.textContent = personalClicks;
+            localStorage.setItem("my_clicks", personalClicks);
+
+            // トランザクションでサーバーの数値を正確に+1する
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(cookieRef);
+                    let newTotal = 1;
+                    if (docSnap.exists()) {
+                        newTotal = docSnap.data().count + 1;
+                    }
+                    transaction.set(cookieRef, { count: newTotal });
+                });
+            } catch (e) {
+                console.error("クリックの保存に失敗しました: ", e);
+            }
         }
-      } catch (err) {
-        console.error("Load error:", err);
-      }
-    }
-    loadInitialCount();
 
-    // リアルタイムで全世界の数値を常に同期・監視
-    onSnapshot(counterRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const total = docSnap.data().count || 0;
-        globalCountEl.textContent = total.toLocaleString();
-      }
-    });
-
-    // クッキーをクリックしたときの処理
-    cookieBtn.addEventListener("click", async (e) => {
-      mySavedClicks++;
-      localStorage.setItem("my_cookie_clicks_master_v2", mySavedClicks.toString());
-      localCountEl.textContent = mySavedClicks.toLocaleString();
-
-      spawnPlusOne(e.clientX, e.clientY);
-
-      // 画面上の数値を即座に増やす
-      const currentDisplayed = parseInt(globalCountEl.textContent.replace(/,/g, "") || "0", 10);
-      globalCountEl.textContent = (currentDisplayed + 1).toLocaleString();
-
-      try {
-        // クラウド側の数値を安全にインクリメント
-        await setDoc(counterRef, { count: increment(1) }, { merge: true });
-      } catch (err) {
-        console.error("Save failed:", err);
-      }
-    });
-
-    function spawnPlusOne(x, y) {
-      const el = document.createElement("div");
-      el.className = "floating-plus";
-      el.textContent = "+1";
-      const offsetX = (Math.random() - 0.5) * 35;
-      el.style.left = `${x + offsetX}px`;
-      el.style.top = `${y - 12}px`;
-      document.body.appendChild(el);
-
-      setTimeout(() => {
-        el.remove();
-      }, 750);
-    }
-  </script>
+        // イベントリスナーの登録（PCのクリック / スマホのタップ両対応）
+        clickBtn.addEventListener("click", handleClick);
+    </script>
 </body>
 </html>
