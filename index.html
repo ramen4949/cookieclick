@@ -112,7 +112,6 @@
   storageBucket: "chat-10127.firebasestorage.app",
   messagingSenderId: "622326024517",
   appId: "1:622326024517:web:ced326fd5863530090d62c",
-  measurementId: "G-RCS4JL8VRN"
         };
 
         // Firebaseの初期化
@@ -129,75 +128,44 @@
         let personalClicks = localStorage.getItem("my_clicks") ? parseInt(localStorage.getItem("my_clicks")) : 0;
         personalCountEl.textContent = personalClicks;
 
-        // サーバーと同期するための変数
-        let pendingClicks = 0;          // まだサーバーに送っていない自分のクリック数
-        let displayedGlobalCount = 0;   // 画面に表示している世界全体の数値を保持する変数
-        let isInitialLoad = true;       // 初回データ読み込み判定用
-
         // Firestoreのリアルタイム同期（世界全体の数値）
         const cookieRef = doc(db, "clicks", "global");
         onSnapshot(cookieRef, (docSnap) => {
             if (docSnap.exists()) {
-                const serverCount = docSnap.data().count;
-                if (isInitialLoad) {
-                    // 初回のみサーバーの正確な数値をベースにする
-                    displayedGlobalCount = serverCount;
-                    isInitialLoad = false;
-                } else {
-                    // 他の人のクリック反映などを取り入れつつ、自分の未送信分ズレを補正
-                    // （サーバーの数値が自分を含まないリアルタイム値の場合はそのまま合わせる）
-                    displayedGlobalCount = Math.max(displayedGlobalCount, serverCount);
-                }
-                globalCountEl.textContent = displayedGlobalCount.toLocaleString();
+                globalCountEl.textContent = docSnap.data().count.toLocaleString();
             } else {
                 globalCountEl.textContent = "0";
             }
         });
 
-        // クリックされたときの処理（即時反映＋裏でバッファ送信）
-        function handleClick() {
+        // クリックされたときの処理（完全リアルタイム：押した瞬間にサーバーへトランザクション送信）
+        async function handleClick() {
             // 1. 個人カウンターを即時増やす
             personalClicks++;
             personalCountEl.textContent = personalClicks;
             localStorage.setItem("my_clicks", personalClicks);
 
-            // 2. 世界全体の表示カウンターも【即時】増やす（ラグを無くすため）
-            displayedGlobalCount++;
-            globalCountEl.textContent = displayedGlobalCount.toLocaleString();
-
-            // 3. 未送信のクリック数を加算
-            pendingClicks++;
-
-            // 4. 揺れエフェクト（クラスを付け外ししてアニメーションを再発火）
+            // 2. クッキーがプルッと揺れるエフェクトを発火
             cookieImg.classList.remove("shake");
             void cookieImg.offsetWidth; // ブラウザに再描画を強制
             cookieImg.classList.add("shake");
-        }
 
-        // 0.3秒ごとに、溜まったクリック数をトランザクションでまとめてサーバーへ安全に送信
-        setInterval(async () => {
-            if (pendingClicks === 0) return; // 溜まってなければ何もしない
-
-            const countToSend = pendingClicks;
-            pendingClicks = 0; // 送信分を一旦リセット
-
+            // 3. サーバーへ即時トランザクション送信（完全リアルタイム）
             try {
                 await runTransaction(db, async (transaction) => {
                     const docSnap = await transaction.get(cookieRef);
-                    let newTotal = countToSend;
+                    let newTotal = 1;
                     if (docSnap.exists()) {
-                        newTotal = docSnap.data().count + countToSend;
+                        newTotal = docSnap.data().count + 1;
                     }
                     transaction.set(cookieRef, { count: newTotal });
                 });
             } catch (e) {
-                console.error("クリックの同期に失敗しました: ", e);
-                // 失敗した分は次回に持ち越すために戻す
-                pendingClicks += countToSend;
+                console.error("クリックの送信に失敗しました: ", e);
             }
-        }, 300);
+        }
 
-        // イベントリスナーの登録（PCのクリック / スマホのタップ両対応）
+        // イベントリスナーの登録
         clickBtn.addEventListener("click", handleClick);
     </script>
 </body>
