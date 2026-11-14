@@ -128,42 +128,69 @@
         let personalClicks = localStorage.getItem("my_clicks") ? parseInt(localStorage.getItem("my_clicks")) : 0;
         personalCountEl.textContent = personalClicks;
 
+        // サーバーと同期するための変数
+        let pendingClicks = 0;          
+        let displayedGlobalCount = 0;   
+        let isInitialLoad = true;       
+
         // Firestoreのリアルタイム同期（世界全体の数値）
         const cookieRef = doc(db, "clicks", "global");
         onSnapshot(cookieRef, (docSnap) => {
             if (docSnap.exists()) {
-                globalCountEl.textContent = docSnap.data().count.toLocaleString();
+                const serverCount = docSnap.data().count;
+                if (isInitialLoad) {
+                    displayedGlobalCount = serverCount;
+                    isInitialLoad = false;
+                } else {
+                    displayedGlobalCount = Math.max(displayedGlobalCount, serverCount);
+                }
+                globalCountEl.textContent = displayedGlobalCount.toLocaleString();
             } else {
                 globalCountEl.textContent = "0";
             }
         });
 
-        // クリックされたときの処理（完全リアルタイム：押した瞬間にサーバーへトランザクション送信）
-        async function handleClick() {
+        // クリックされたときの処理
+        function handleClick() {
             // 1. 個人カウンターを即時増やす
             personalClicks++;
             personalCountEl.textContent = personalClicks;
             localStorage.setItem("my_clicks", personalClicks);
 
-            // 2. クッキーがプルッと揺れるエフェクトを発火
+            // 2. 世界全体の表示カウンターを即時増やす
+            displayedGlobalCount++;
+            globalCountEl.textContent = displayedGlobalCount.toLocaleString();
+
+            // 3. 未送信のクリック数を加算
+            pendingClicks++;
+
+            // 4. クッキーがプルッと揺れるエフェクトを発火
             cookieImg.classList.remove("shake");
             void cookieImg.offsetWidth; // ブラウザに再描画を強制
             cookieImg.classList.add("shake");
+        }
 
-            // 3. サーバーへ即時トランザクション送信（完全リアルタイム）
+        // 0.3秒ごとにまとめてサーバーへ安全に送信
+        setInterval(async () => {
+            if (pendingClicks === 0) return;
+
+            const countToSend = pendingClicks;
+            pendingClicks = 0;
+
             try {
                 await runTransaction(db, async (transaction) => {
                     const docSnap = await transaction.get(cookieRef);
-                    let newTotal = 1;
+                    let newTotal = countToSend;
                     if (docSnap.exists()) {
-                        newTotal = docSnap.data().count + 1;
+                        newTotal = docSnap.data().count + countToSend;
                     }
                     transaction.set(cookieRef, { count: newTotal });
                 });
             } catch (e) {
-                console.error("クリックの送信に失敗しました: ", e);
+                console.error("クリックの同期に失敗しました: ", e);
+                pendingClicks += countToSend;
             }
-        }
+        }, 300);
 
         // イベントリスナーの登録
         clickBtn.addEventListener("click", handleClick);
