@@ -52,12 +52,24 @@
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            transition: transform 0.1s ease;
             object-fit: cover;
+            transition: transform 0.05s ease;
         }
-        .cookie:active {
-            transform: scale(0.92);
+        
+        /* 揺れる＆縮むクリックエフェクト */
+        @keyframes shakeAndScale {
+            0% { transform: scale(1) rotate(0deg); }
+            20% { transform: scale(0.85) rotate(-6deg); }
+            40% { transform: scale(1.05) rotate(6deg); }
+            60% { transform: scale(0.95) rotate(-3deg); }
+            80% { transform: scale(1.02) rotate(2deg); }
+            100% { transform: scale(1) rotate(0deg); }
         }
+
+        .cookie.shake {
+            animation: shakeAndScale 0.3s ease;
+        }
+
         .stats {
             margin-top: 20px;
             font-size: 1rem;
@@ -110,10 +122,14 @@
         const globalCountEl = document.getElementById("global-count");
         const personalCountEl = document.getElementById("personal-count");
         const clickBtn = document.getElementById("click-btn");
+        const cookieImg = document.getElementById("cookie-img");
 
         // ローカルストレージから自分のクリック数を読み込む
         let personalClicks = localStorage.getItem("my_clicks") ? parseInt(localStorage.getItem("my_clicks")) : 0;
         personalCountEl.textContent = personalClicks;
+
+        // オートクリック対策：未送信のクリック数を溜めておく変数
+        let pendingClicks = 0;
 
         // Firestoreのリアルタイム同期（世界全体の数値）
         const cookieRef = doc(db, "clicks", "global");
@@ -125,27 +141,44 @@
             }
         });
 
-        // クリックされたときの処理（トランザクションを使って安全に+1する）
-        async function handleClick() {
+        // クリックされたときの処理
+        function handleClick() {
             // 個人カウンターを即時増やす
             personalClicks++;
             personalCountEl.textContent = personalClicks;
             localStorage.setItem("my_clicks", personalClicks);
 
-            // トランザクションでサーバーの数値を正確に+1する
+            // 未送信のクリック数を加算
+            pendingClicks++;
+
+            // 揺れエフェクト（クラスを付け外ししてアニメーションを再発火させる）
+            cookieImg.classList.remove("shake");
+            void cookieImg.offsetWidth; // ブラウザに再描画を強制
+            cookieImg.classList.add("shake");
+        }
+
+        // 0.5秒ごとに、溜まったクリック数をまとめて一気にサーバーへ送信する
+        setInterval(async () => {
+            if (pendingClicks === 0) return; // 溜まってなければ何もしない
+
+            const countToSend = pendingClicks;
+            pendingClicks = 0; // 送信分をリセット
+
             try {
                 await runTransaction(db, async (transaction) => {
                     const docSnap = await transaction.get(cookieRef);
-                    let newTotal = 1;
+                    let newTotal = countToSend;
                     if (docSnap.exists()) {
-                        newTotal = docSnap.data().count + 1;
+                        newTotal = docSnap.data().count + countToSend;
                     }
                     transaction.set(cookieRef, { count: newTotal });
                 });
             } catch (e) {
-                console.error("クリックの保存に失敗しました: ", e);
+                console.error("クリックの同期に失敗しました: ", e);
+                // 失敗した分は次回に持ち越すために戻す
+                pendingClicks += countToSend;
             }
-        }
+        }, 500);
 
         // イベントリスナーの登録（PCのクリック / スマホのタップ両対応）
         clickBtn.addEventListener("click", handleClick);
